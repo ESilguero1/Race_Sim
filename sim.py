@@ -7,7 +7,7 @@ def main():
     # pygame setup
     pygame.init()
     size = width, height = 1280, 720
-    physics.screen = pygame.display.set_mode(size, flags=pygame.SCALED, vsync=1)
+    screen = pygame.display.set_mode(size, flags=pygame.SCALED, vsync=1)
     clock = pygame.time.Clock()
     running = True
     dt = 0
@@ -29,13 +29,18 @@ def main():
                 running = False
 
         # fill the screen with a color to wipe away anything from last frame
-        physics.screen.fill("white")
+        screen.fill("white")
 
         # update car group
         cars.update()
 
         # draw car group
-        cars.draw(physics.screen)
+        cars.draw(screen)
+
+        font = pygame.font.Font(None, 32)
+        text = font.render(f"Speed: {int(p1.vel.magnitude()* 5)} mph", True, "black")
+        textpos = text.get_rect(centerx=screen.get_width()/2, y=10)
+        screen.blit(text, textpos)
 
         # flip() the display to put your work on screen
         pygame.display.flip()
