@@ -2,12 +2,12 @@ import numpy as np
 import pygame
 import physics
 from Car import Car
+from Wall import Wall
 
 def main():
     # pygame setup
     pygame.init()
-    size = width, height = 1280, 720
-    screen = pygame.display.set_mode(size, flags=pygame.SCALED, vsync=1)
+    screen = pygame.display.set_mode((0,0), vsync=1)
     clock = pygame.time.Clock()
     running = True
     dt = 0
@@ -18,8 +18,14 @@ def main():
 
     cars = pygame.sprite.Group()
     
-    p1 = Car(f1, width/2, height/2)
+    screen_width, screen_height = screen.get_width(), screen.get_height()
+    p1 = Car(f1, screen_width/2, screen_height/2)
     cars.add(p1)
+
+    wall1 = Wall(screen_width/2 + 80, 50, screen_width/2 + 100, screen_height-50, pygame.math.Vector2(-1, 0))
+    map = pygame.sprite.Group()
+    # map.add(wall1)
+    print(map)
 
     while running:
 
@@ -32,10 +38,13 @@ def main():
         screen.fill("white")
 
         # update car group
-        cars.update()
+        cars.update(map)
 
         # draw car group
         cars.draw(screen)
+
+        # draw wall group
+        map.draw(screen)
 
         font = pygame.font.Font(None, 32)
         text = font.render(f"Speed: {int(p1.vel.magnitude()* 5)} mph", True, "black")

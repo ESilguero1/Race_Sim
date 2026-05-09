@@ -21,7 +21,7 @@ class Car(pygame.sprite.Sprite):
         # engine throttle [-1, 1]
         self.throttle = 0
 
-    def update(self):
+    def update(self, map):
         keys = pygame.key.get_pressed()
         self.steer = 0
         self.throttle = 0
@@ -37,6 +37,8 @@ class Car(pygame.sprite.Sprite):
 
         physics.Car_Physics(self)
 
-        self.rect.move_ip(self.vel[0], -self.vel[1])
+        physics.Car_Collisions(self, map)
+
+        self.rect.move_ip(self.vel.x, -self.vel.y)
         self.image = pygame.transform.rotozoom(self.original_image, self.dir.as_polar()[1], 1)
         self.rect = self.image.get_rect(center = self.rect.center)
