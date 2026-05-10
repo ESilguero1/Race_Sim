@@ -1,44 +1,46 @@
-import pygame
+import pygame as pg
 import physics
 
-class Car(pygame.sprite.Sprite):
+class Car(pg.sprite.Sprite):
     def __init__(self, image, x, y):
-        pygame.sprite.Sprite.__init__(self)
+        pg.sprite.Sprite.__init__(self)
         self.image = image
         self.original_image = image
+        self.mask = pg.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.center = (x,y)
 
         # direction vector
-        self.dir = pygame.math.Vector2(1,0)
+        self.dir = pg.math.Vector2(1,0)
 
         # velocity vctor
-        self.vel = pygame.math.Vector2(0,0)
+        self.vel = pg.math.Vector2(0,0)
 
         # steering angle [-1, 1]
         self.steer = 0
 
+        # rotational velocity
+        self.w = 0
+
         # engine throttle [-1, 1]
         self.throttle = 0
 
-    def update(self, map):
-        keys = pygame.key.get_pressed()
+    def update(self, keys, map):
         self.steer = 0
         self.throttle = 0
 
-        if keys[pygame.K_a]:
+        if keys[pg.K_a]:
             self.steer = -1
-        if keys[pygame.K_d]:
+        if keys[pg.K_d]:
             self.steer = 1
-        if keys[pygame.K_w]:
+        if keys[pg.K_w]:
             self.throttle = 1
-        if keys[pygame.K_s]:
+        if keys[pg.K_s]:
             self.throttle = -0.5
 
-        physics.Car_Physics(self)
+        physics.Car_Physics(self, map)
 
-        physics.Car_Collisions(self, map)
-
-        self.rect.move_ip(self.vel.x, -self.vel.y)
-        self.image = pygame.transform.rotozoom(self.original_image, self.dir.as_polar()[1], 1)
+        # Update image orientation
+        self.image = pg.transform.rotate(self.original_image, self.dir.as_polar()[1])
         self.rect = self.image.get_rect(center = self.rect.center)
+        self.mask = pg.mask.from_surface(self.image)
