@@ -1,5 +1,7 @@
 import pygame as pg
 import physics
+import Sensor
+import Controller
 
 CAR_WIDTH_PX = 372 * .075
 CAR_LENGTH_PX = 961 * .075
@@ -11,7 +13,7 @@ BACKGROUND = (227, 227, 227)
 
 class Skid(pg.sprite.Sprite):
     def __init__(self, x, y, dir):
-        pg.sprite.Sprite.__init__(self)
+        super().__init__()
         self.image = pg.Surface((CAR_WIDTH_PX, SKID_LENGTH))
         self.image.fill(BACKGROUND)
         pg.draw.line(self.image, "black", (2, 0), (2, SKID_LENGTH), SKID_WIDTH)
@@ -32,10 +34,13 @@ class Skid(pg.sprite.Sprite):
             self.kill()
 
 class Car(pg.sprite.Sprite):
-    def __init__(self, image, x, y):
-        pg.sprite.Sprite.__init__(self)
-        self.image = image
-        self.original_image = image
+    def __init__(self, color, x, y, controller):
+        super().__init__()
+        f1 = pg.image.load(f"assets/F1_{color}.png")
+        f1 = f1.convert_alpha()
+        f1 = pg.transform.scale_by(f1, .075)
+        self.image = f1
+        self.original_image = f1
         self.mask = pg.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.center = (x,y)
@@ -55,7 +60,20 @@ class Car(pg.sprite.Sprite):
         # engine throttle [-1, 1]
         self.throttle = 0
 
-    def update(self, map, cars, skids):
+        # controller
+        self.controller = controller
+
+        # sensors
+        front_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2, 0), 0)
+        front_right_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2 - 2, CAR_WIDTH_PX/2 - 2), 45)
+        front_left_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2 - 2, -CAR_WIDTH_PX/2 + 2), -45)
+        right_sensor = Sensor.Sensor_Short(self, (0, CAR_WIDTH_PX/2 - 2), 90)
+        left_sensor = Sensor.Sensor_Short(self, (0, -CAR_WIDTH_PX/2 + 2), -90)
+        self.sensors = [front_sensor, front_right_sensor, front_left_sensor, left_sensor, right_sensor]
+
+    def update(self, map, cars, skids, screen):
+        self.controller.output(self)
+
         physics.Car_Physics(self, map, cars, skids)
 
         # Update image orientation
@@ -63,19 +81,19 @@ class Car(pg.sprite.Sprite):
         self.rect = self.image.get_rect(center = self.rect.center)
         self.mask = pg.mask.from_surface(self.image)
 
+        # Update sensor distances
+        for sensor in self.sensors:
+            sensor.sense(map, screen)
+
     def set_pos(self, pos):
         self.rect.center = pos
 
-class Car_Green(Car):
-    def __init__(self, x, y):
-        f1 = pg.image.load('assets/F1_Green.png')
-        f1 = f1.convert_alpha()
-        f1 = pg.transform.scale_by(f1, .075)
-        Car.__init__(self, f1, x, y)
+class Car_User(Car):
+    def __init__(self, color, x, y):
+        controller = Controller.User_Controller(pg.K_w, pg.K_s, pg.K_a, pg.K_d)
+        super().__init__(color, x, y, controller)
 
-class Car_Blue(Car):
-    def __init__(self, x, y):
-        f1 = pg.image.load('assets/F1_Blue.png')
-        f1 = f1.convert_alpha()
-        f1 = pg.transform.scale_by(f1, .075)
-        Car.__init__(self, f1, x, y)
+class Car_Auto(Car):
+    def __init__(self, color, x, y):
+        controller = Controller.Controller_5Sensor()
+        super().__init__(color, x, y, self.controller)

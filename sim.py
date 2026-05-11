@@ -40,17 +40,17 @@ def main():
     # pg setup
     pg.init()
     screen = pg.display.set_mode((0,0), vsync=1)
+    pg.display.set_caption("CARS GO VROOM")
     clock = pg.time.Clock()
     running = True
 
     cars = pg.sprite.Group()
     
     screen_width, screen_height = screen.get_width(), screen.get_height()
-    p1 = Car.Car_Green(screen_width/2, screen_height/2)
-    p1_controls = Controller.User_Controller(p1, pg.K_w, pg.K_s, pg.K_a, pg.K_d)
-    p2 = Car.Car_Blue(screen_width/2, screen_height/2+30)
-    p2_controls = Controller.User_Controller(p2, pg.K_UP, pg.K_DOWN, pg.K_LEFT, pg.K_RIGHT)
-    cars.add(p1, p2)
+    p1 = Car.Car_User("Green", screen_width/2, screen_height/2)
+    # p2 = Car.Car_Blue(screen_width/2, screen_height/2+30)
+    # p2_controls = Controller.User_Controller(p2, pg.K_UP, pg.K_DOWN, pg.K_LEFT, pg.K_RIGHT)
+    cars.add(p1)
 
     map = pg.sprite.Group()
     Load_Map(map, {"Wall_Straight" : Wall.Wall_Straight})
@@ -59,7 +59,7 @@ def main():
 
     reset = pg.image.load('assets/reset.png')
     reset = reset.convert_alpha()
-    reset = pg.transform.scale_by(reset, 0.1)
+    reset = pg.transform.scale_by(reset, 0.65)
     reset_rect = reset.get_rect()
     reset_rect.top = 5
     reset_rect.right = screen_width-5
@@ -98,31 +98,27 @@ def main():
                         wall.update(mouse_pos, keys)
                         break # Don't want to move multiple walls at once
             if reset_rect.collidepoint(mouse_pos):
-                p1.rect.center = (screen_width/2, screen_height/2)
-                p1.vel.update(0,0)
-                p1.dir.update(START_DIR)
-                p2.rect.center = (screen_width/2, screen_height/2+30)
-                p2.vel.update(0,0)
-                p2.dir.update(START_DIR)
+                for car in cars:
+                    car.rect.center = (screen_width/2, screen_height/2)
+                    car.vel.update(0,0)
+                    car.dir.update(START_DIR)
+
             for car in cars:
                 if car.rect.collidepoint(mouse_pos):
                     car.set_pos(mouse_pos)
 
+                    if keys[pg.K_r]:
+                        car.dir.rotate(45)
+
         # fill the screen with a color to wipe away anything from last frame
         screen.fill(BACKGROUND)
 
-        # update player1 controller
-        p1_controls.output()
-
-        # update player2 controller
-        p2_controls.output()
+        # update car group
+        if Play:
+            cars.update(map, cars, skids, screen)
 
         # update/draw skids
         skids.update(screen)
-
-        # update car group
-        if Play:
-            cars.update(map, cars, skids)
 
         # draw car group
         cars.draw(screen)
@@ -135,11 +131,6 @@ def main():
 
         # draw pause button
         screen.blit(pause, pause_rect)
-
-        font = pg.font.Font(None, 32)
-        text = font.render(f"P1 Speed: {int(p1.vel.magnitude()* 5)} mph P2 Speed: {int(p2.vel.magnitude()* 5)} mph", True, "black")
-        textpos = text.get_rect(centerx=screen.get_width()/2, y=10)
-        screen.blit(text, textpos)
 
         # flip() the display to put your work on screen
         pg.display.flip()

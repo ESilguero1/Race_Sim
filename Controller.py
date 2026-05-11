@@ -1,28 +1,41 @@
 import pygame as pg
 
 class Controller:
-    def __init__(self, Car):
-        self.Car = Car
+    def __init__(self):
+        self.steer = 0
+        self.throttle = 0
+
+    def output(self, Car):
+        Car.steer = self.steer
+        Car.throttle = self.throttle
 
 class User_Controller(Controller):
-    def __init__(self, Car, forward, backward, left, right):
-        Controller.__init__(self, Car)
+    def __init__(self, forward, backward, left, right):
+        super().__init__()
         self.forward = forward
         self.backward = backward
         self.left = left
         self.right = right
 
-    def output(self):
+    def output(self, Car):
         keys = pg.key.get_pressed()
 
-        self.Car.steer = 0
-        self.Car.throttle = 0
+        self.steer = 0
+        self.throttle = 0
 
         if keys[self.left]:
-            self.Car.steer = -1
+            self.steer = -1
         if keys[self.right]:
-            self.Car.steer = 1
+            self.steer = 1
         if keys[self.forward]:
-            self.Car.throttle = 1
+            self.throttle = 1
         if keys[self.backward]:
-            self.Car.throttle = -0.5
+            self.throttle = -0.5
+
+        super().output(Car)
+
+class Controller_5Sensor(Controller):
+    def __init__(self):
+        super().__init__()
+
+    

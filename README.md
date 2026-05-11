@@ -14,5 +14,8 @@ Walls can be dragged, rotated, and infinitely spawned. The map is also loaded on
 ## Any number of players (kind of)
 Cars can be spawned and bound to keys, until you run out of keyboard space.
 
+## Distance sensors
+Long and short range distance sensors can be attached to cars to allow for automated control! Raycasting is used to find distance, and that distance can be used in a control algorithm to drive automatically.
+
 ## Working on:
-Simulating distance sensors to allow for the implementation of automated cars!!
+Implementing a simple PID controller to get a rudimentary car bot so I can race it.
