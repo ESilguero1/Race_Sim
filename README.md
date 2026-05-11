@@ -6,6 +6,8 @@ Cars can collide with walls (but only from one specified direction, otherwise it
 
 Cars can also collide with each other, and "trade" velocity due to having equal masses. The resulting velocity is scaled based on the car elasticity coefficient.
 
+When the car goes too fast and skids, marks are produced on the track.
+
 ## Editable Map
 Walls can be dragged, rotated, and infinitely spawned. The map is also loaded on start and saved on exit, so you don't have to redo the map every time.
 
