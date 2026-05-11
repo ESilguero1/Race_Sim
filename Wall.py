@@ -1,9 +1,11 @@
 import pygame as pg
 
+WALL_SCALE = 5
+
 class Wall(pg.sprite.Sprite):
     def __init__(self, image, centerx, centery, norm_angle):
         pg.sprite.Sprite.__init__(self)
-        self.image = pg.transform.scale_by(image,5)
+        self.image = pg.transform.scale_by(image,WALL_SCALE)
         self.original_image = self.image
         self.rect = self.image.get_rect()
         self.rect.center = (centerx, centery)
@@ -25,3 +27,11 @@ class Wall(pg.sprite.Sprite):
             self.rotating = True
         elif not keys[pg.K_r]:
             self.rotating = False
+        if keys[pg.K_x]:
+            self.kill()
+
+class Wall_Straight(Wall):
+    def __init__(self, centerx, centery, norm_angle):
+        straight = pg.image.load('assets/Wall_straight.png')
+        straight = straight.convert_alpha()
+        Wall.__init__(self, straight, centerx, centery, norm_angle)
