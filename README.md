@@ -11,7 +11,7 @@ When the car goes too fast and skids, marks are produced on the track.
 ## Editable Map
 Walls can be dragged, rotated, and infinitely spawned. The map is also loaded on start and saved on exit, so you don't have to redo the map every time.
 
-## Any number of playser (kind of)
+## Any number of players (kind of)
 Cars can be spawned and bound to keys, until you run out of keyboard space.
 
 ## Working on:

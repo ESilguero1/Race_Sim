@@ -64,24 +64,31 @@ def main():
     reset_rect.top = 5
     reset_rect.right = screen_width-5
 
+    pause = pg.image.load('assets/Pause.png')
+    pause = pause.convert_alpha()
+    pause = pg.transform.scale_by(pause, .65)
+    pause_rect = pause.get_rect()
+    pause_rect.top = reset_rect.bottom + 10
+    pause_rect.right = screen_width-5
+
     Play = True
 
     while running:
+        mouse_pos = pg.mouse.get_pos()
 
         # pg.QUIT event means the user clicked X to close your window
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 running = False
+            if event.type == pg.MOUSEBUTTONDOWN:
+                if pause_rect.collidepoint(mouse_pos):
+                    Play = not Play
 
         keys = pg.key.get_pressed()
-
-        if keys[pg.K_p] and Play:
-            Play = not Play
 
         click = pg.mouse.get_pressed()[0]
 
         if click:
-            mouse_pos = pg.mouse.get_pos()
             for wall in map:
                 if wall.rect.collidepoint(mouse_pos):
                     x, y = mouse_pos[0] - wall.rect.x, mouse_pos[1] - wall.rect.y
@@ -92,11 +99,11 @@ def main():
                         break # Don't want to move multiple walls at once
             if reset_rect.collidepoint(mouse_pos):
                 p1.rect.center = (screen_width/2, screen_height/2)
-                p1.vel = pg.math.Vector2(0,0)
-                p1.dir = pg.math.Vector2(START_DIR)
+                p1.vel.update(0,0)
+                p1.dir.update(START_DIR)
                 p2.rect.center = (screen_width/2, screen_height/2+30)
-                p2.vel = pg.math.Vector2(0,0)
-                p2.dir = pg.math.Vector2(START_DIR)
+                p2.vel.update(0,0)
+                p2.dir.update(START_DIR)
             for car in cars:
                 if car.rect.collidepoint(mouse_pos):
                     car.set_pos(mouse_pos)
@@ -125,6 +132,9 @@ def main():
 
         # draw reset button
         screen.blit(reset, reset_rect)
+
+        # draw pause button
+        screen.blit(pause, pause_rect)
 
         font = pg.font.Font(None, 32)
         text = font.render(f"P1 Speed: {int(p1.vel.magnitude()* 5)} mph P2 Speed: {int(p2.vel.magnitude()* 5)} mph", True, "black")

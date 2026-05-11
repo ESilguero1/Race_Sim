@@ -104,8 +104,8 @@ def Car_Physics(Car_Moving, map, cars, skids):
                 
                 # Conservation of momentum, trivial solution (equal masses)
                 temp_vel = new_vel
-                new_vel = other_car.vel * CAR_ELASTICITY_COEF
-                other_car.vel = temp_vel * CAR_ELASTICITY_COEF
+                new_vel.update(other_car.vel * CAR_ELASTICITY_COEF)
+                other_car.vel.update(temp_vel * CAR_ELASTICITY_COEF)
 
     # Move
     Car_Moving.rect.move_ip(new_vel.x*dt*DIST_SCALE, -new_vel.y*dt*DIST_SCALE)
