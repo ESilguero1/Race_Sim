@@ -24,7 +24,7 @@ def Save_Map(map):
         json.dump(data, f)
 
 def Load_Map(map, wall_types):
-    with open('assets/map.json') as f:
+    with open('assets/map_easy.json') as f:
         data = json.load(f)
 
     for wall in data:
@@ -47,10 +47,11 @@ def main():
     cars = pg.sprite.Group()
     
     screen_width, screen_height = screen.get_width(), screen.get_height()
-    p1 = Car.Car_User("Green", screen_width/2, screen_height/2)
-    # p2 = Car.Car_Blue(screen_width/2, screen_height/2+30)
-    # p2_controls = Controller.User_Controller(p2, pg.K_UP, pg.K_DOWN, pg.K_LEFT, pg.K_RIGHT)
-    cars.add(p1)
+    p1 = Car.Car_User1("Green", screen_width/2, screen_height/2 + 50)
+    # p2 = Car.Car_User2("Blue", screen_width/2, p1.rect.bottom+30, 200)
+    auto1 = Car.Car_Tweinstein("Blue", p1.rect.centerx, p1.rect.bottom+30, 1, 4, 1, 1)
+    auto2 = Car.Car_Tweinstein("Green", p1.rect.centerx, p1.rect.bottom+30, 1, 6, 1, 1)
+    cars.add(auto1, auto2)
 
     map = pg.sprite.Group()
     Load_Map(map, {"Wall_Straight" : Wall.Wall_Straight})
@@ -98,8 +99,10 @@ def main():
                         wall.update(mouse_pos, keys)
                         break # Don't want to move multiple walls at once
             if reset_rect.collidepoint(mouse_pos):
+                offset = 50
                 for car in cars:
-                    car.rect.center = (screen_width/2, screen_height/2)
+                    car.rect.center = (screen_width/2, screen_height/2 + offset)
+                    offset += 30
                     car.vel.update(0,0)
                     car.dir.update(START_DIR)
 
@@ -108,17 +111,19 @@ def main():
                     car.set_pos(mouse_pos)
 
                     if keys[pg.K_r]:
-                        car.dir.rotate(45)
+                        car.dir.rotate_ip(45)
+                    elif keys[pg.K_x]:
+                        car.kill()
 
         # fill the screen with a color to wipe away anything from last frame
         screen.fill(BACKGROUND)
 
+        # update/draw skids
+        skids.update(screen)
+
         # update car group
         if Play:
             cars.update(map, cars, skids, screen)
-
-        # update/draw skids
-        skids.update(screen)
 
         # draw car group
         cars.draw(screen)

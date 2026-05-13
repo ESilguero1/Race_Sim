@@ -12,7 +12,7 @@ class Sensor:
         self.distance = 0
         self.max_dist = max_dist*physics.DIST_SCALE
     
-    def sense(self, map, screen):
+    def sense(self, map, cars, screen):
         rel_place_x = pg.math.Vector2(self.Car.dir*pg.math.Vector2(1, -1).elementwise()*self.rel_pos[0])
         rel_place_y = pg.math.Vector2(self.Car.dir.rotate(90)*pg.math.Vector2(1,-1).elementwise()*self.rel_pos[1])
         sensor_pos = pg.math.Vector2(self.Car.rect.center) + rel_place_x + rel_place_y
@@ -23,24 +23,33 @@ class Sensor:
         while not hit and self.distance < self.max_dist:
             sensed_pos += sensor_angle*SENSOR_RESOLUTION
             self.distance = sensed_pos.distance_to(sensor_pos)
+            # Sense wall distance
             for wall in map:
                 if wall.rect.collidepoint(sensed_pos):
                     # get relative position of ray
                     x, y = sensed_pos.x - wall.rect.x, sensed_pos.y - wall.rect.y
                     if wall.mask.get_at((x, y)): # Ray hit a wall
                         hit = True
+            # Sense car distance
+            if physics.CARS_INTERACT:
+                for car in cars:
+                    if car.rect.collidepoint(sensed_pos):
+                        # get relative position of ray
+                        x, y = sensed_pos.x - car.rect.x, sensed_pos.y - car.rect.y
+                        if car.mask.get_at((x, y)): # Ray hit a wall
+                            hit = True
 
         pg.draw.line(screen, SENSOR_COLOR, sensor_pos, sensed_pos, 2)
     
     def get_dist(self):
         return self.distance/physics.DIST_SCALE
     
-MAX_DIST_FAR = 5 # meters
+MAX_DIST_FAR = 10 # meters
 class Sensor_Far(Sensor):
     def __init__(self, Car, rel_pos, rel_angle):
         super().__init__(Car, rel_pos, rel_angle, MAX_DIST_FAR)
  
-MAX_DIST_SHORT = 2 # meters
+MAX_DIST_SHORT = 3 # meters
 class Sensor_Short(Sensor):
     def __init__(self, Car, rel_pos, rel_angle):
         super().__init__(Car, rel_pos, rel_angle, MAX_DIST_SHORT)

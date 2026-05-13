@@ -1,6 +1,6 @@
 import pygame as pg
 import math   
-import Car                     
+from Car import Skid                     
 
 DIST_SCALE = 60
 TIRE_FRIC_COEFF = 1.7
@@ -16,9 +16,43 @@ STEER_ANGLE_MAX = 45 # deg
 WALL_ELASTICITY_COEF = 0.4
 CAR_ELASTICITY_COEF = 0.7
 COLLISION_PUSHBACK = 5 # to avoid feedback collisions
+CARS_INTERACT = False
 dt = 1/60
 
 def Car_Physics(Car_Moving, map, cars, skids):
+    # Wall collisions 
+    wall_hit_list = pg.sprite.spritecollide(Car_Moving, map, False)
+    for wall in wall_hit_list:
+        if pg.sprite.collide_mask(Car_Moving, wall):
+            Car_Moving.throttle = 0
+            while pg.sprite.collide_mask(Car_Moving, wall):
+                Car_Moving.rect.move_ip(wall.normal.x*COLLISION_PUSHBACK, -wall.normal.y*COLLISION_PUSHBACK)
+
+            # Reflect car off wall
+            Car_Moving.vel.update(Car_Moving.vel.reflect(wall.normal)*WALL_ELASTICITY_COEF)
+
+            # Turn car
+            # new_dir.update((new_dir + wall.normal/2).normalize())
+    
+    # Car collisions
+    if CARS_INTERACT:
+        car_hit_list = pg.sprite.spritecollide(Car_Moving, cars, False)
+        for other_car in car_hit_list:
+            if not other_car == Car_Moving:
+                if pg.sprite.collide_mask(Car_Moving, other_car):
+                    Car_Moving.throttle = 0
+                    other_car.throttle = 0
+                    # Get vector between cars
+                    collision_normal = pg.math.Vector2(Car_Moving.rect.centerx - other_car.rect.centerx, Car_Moving.rect.centery-other_car.rect.centery).normalize()
+                    while pg.sprite.collide_mask(Car_Moving, other_car):
+                        Car_Moving.rect.move_ip(collision_normal.x*COLLISION_PUSHBACK, collision_normal.y*COLLISION_PUSHBACK)
+                    
+                    # Conservation of momentum, trivial solution (equal masses)
+                    temp_vel = Car_Moving.vel
+                    Car_Moving.vel.update(other_car.vel * CAR_ELASTICITY_COEF)
+                    other_car.vel.update(temp_vel * CAR_ELASTICITY_COEF)
+
+
     # Normalize velocity vector to see if we're sliding
     vel_mag = Car_Moving.vel.magnitude()
 
@@ -31,13 +65,13 @@ def Car_Physics(Car_Moving, map, cars, skids):
 
     # Forces acting on car:
     # Normal force, between car and ground
-    f_n = GRAVITY * CAR_MASS + (DRAG_COEFF * vel_mag**2) # gravity + downforce
+    f_n = GRAVITY * CAR_MASS + (DRAG_COEFF * Car_Moving.vel.magnitude_squared()) # gravity + downforce
 
     # Engine torque / tire radius, in direction of car
     f_eng = Car_Moving.throttle * (min(ENGINE_TORQUE / TIRE_RAD, f_n)) * Car_Moving.dir
 
     # Drag, opposing car velocity
-    f_drag = vel_mag**2*DRAG_COEFF*DRAG_AREA*-vel_normalized
+    f_drag = Car_Moving.vel.magnitude_squared()*DRAG_COEFF*DRAG_AREA*-vel_normalized
 
     # Mechanical friction, opposing car
     f_mech = pg.math.Vector2(0,0)
@@ -52,7 +86,7 @@ def Car_Physics(Car_Moving, map, cars, skids):
     f_fric = min(f_fric_max, force_needed)*-vel_lat.normalize() if vel_lat.magnitude() > 0 else pg.math.Vector2(0,0) # friction will oppose sliding until it can't
 
     if force_needed > f_fric_max:
-        skids.add(Car.Skid(Car_Moving.rect.centerx, Car_Moving.rect.centery, Car_Moving.dir))
+        skids.add(Skid(Car_Moving.rect.centerx, Car_Moving.rect.centery, Car_Moving.dir))
 
     # Net force
     f_net = f_eng + f_drag + f_mech + f_fric
@@ -78,34 +112,6 @@ def Car_Physics(Car_Moving, map, cars, skids):
     # Change in angle
     delta_theta = -w*dt
     new_dir = Car_Moving.dir.rotate(math.degrees(delta_theta))
-
-
-    # Check for collisions 
-    wall_hit_list = pg.sprite.spritecollide(Car_Moving, map, False)
-    for wall in wall_hit_list:
-        if pg.sprite.collide_mask(Car_Moving, wall):
-            while pg.sprite.collide_mask(Car_Moving, wall):
-                Car_Moving.rect.move_ip(wall.normal.x*COLLISION_PUSHBACK, -wall.normal.y*COLLISION_PUSHBACK)
-
-            # Reflect car off wall
-            new_vel.update(new_vel.reflect(wall.normal)*WALL_ELASTICITY_COEF)
-
-            # Turn car
-            # new_dir.update((new_dir + wall.normal/2).normalize())
-    
-    car_hit_list = pg.sprite.spritecollide(Car_Moving, cars, False)
-    for other_car in car_hit_list:
-        if not other_car == Car_Moving:
-            if pg.sprite.collide_mask(Car_Moving, other_car):
-                # Get vector between cars
-                collision_normal = pg.math.Vector2(Car_Moving.rect.centerx - other_car.rect.centerx, Car_Moving.rect.centery-other_car.rect.centery).normalize()
-                while pg.sprite.collide_mask(Car_Moving, other_car):
-                    Car_Moving.rect.move_ip(collision_normal.x*COLLISION_PUSHBACK, collision_normal.y*COLLISION_PUSHBACK)
-                
-                # Conservation of momentum, trivial solution (equal masses)
-                temp_vel = new_vel
-                new_vel.update(other_car.vel * CAR_ELASTICITY_COEF)
-                other_car.vel.update(temp_vel * CAR_ELASTICITY_COEF)
 
     # Move
     Car_Moving.rect.move_ip(new_vel.x*dt*DIST_SCALE, -new_vel.y*dt*DIST_SCALE)

@@ -44,7 +44,7 @@ class Car(pg.sprite.Sprite):
         self.mask = pg.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.center = (x,y)
-
+        
         # direction vector
         self.dir = pg.math.Vector2(-1,0)
 
@@ -63,16 +63,7 @@ class Car(pg.sprite.Sprite):
         # controller
         self.controller = controller
 
-        # sensors
-        front_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2, 0), 0)
-        front_right_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2 - 2, CAR_WIDTH_PX/2 - 2), 45)
-        front_left_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2 - 2, -CAR_WIDTH_PX/2 + 2), -45)
-        right_sensor = Sensor.Sensor_Short(self, (0, CAR_WIDTH_PX/2 - 2), 90)
-        left_sensor = Sensor.Sensor_Short(self, (0, -CAR_WIDTH_PX/2 + 2), -90)
-        self.sensors = [front_sensor, front_right_sensor, front_left_sensor, left_sensor, right_sensor]
-
     def update(self, map, cars, skids, screen):
-        self.controller.output(self)
 
         physics.Car_Physics(self, map, cars, skids)
 
@@ -81,19 +72,46 @@ class Car(pg.sprite.Sprite):
         self.rect = self.image.get_rect(center = self.rect.center)
         self.mask = pg.mask.from_surface(self.image)
 
-        # Update sensor distances
-        for sensor in self.sensors:
-            sensor.sense(map, screen)
-
     def set_pos(self, pos):
         self.rect.center = pos
 
-class Car_User(Car):
+class Car_User1(Car):
     def __init__(self, color, x, y):
         controller = Controller.User_Controller(pg.K_w, pg.K_s, pg.K_a, pg.K_d)
         super().__init__(color, x, y, controller)
+    
+    def update(self, map, cars, skids, screen):
+        self.controller.output(self)
+        super().update(map, cars, skids, screen)
 
-class Car_Auto(Car):
+class Car_User2(Car):
     def __init__(self, color, x, y):
-        controller = Controller.Controller_5Sensor()
-        super().__init__(color, x, y, self.controller)
+        controller = Controller.User_Controller(pg.K_UP, pg.K_DOWN, pg.K_LEFT, pg.K_RIGHT)
+        super().__init__(color, x, y, controller)
+    
+    def update(self, map, cars, skids, screen):
+        self.controller.output(self)
+        super().update(map, cars, skids, screen)
+
+class Car_Tweinstein(Car):
+    def __init__(self, color, x, y, kp_d, kd_d, kp_a, kd_a):
+        # sensors
+        front_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2, 0), 0)
+        front_left_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2 - 2, CAR_WIDTH_PX/2 - 2), 45)
+        front_right_sensor = Sensor.Sensor_Far(self, (CAR_LENGTH_PX/2 - 2, -CAR_WIDTH_PX/2 + 2), -45)
+        left_sensor = Sensor.Sensor_Short(self, (0, CAR_WIDTH_PX/2 - 2), 90)
+        right_sensor = Sensor.Sensor_Short(self, (0, -CAR_WIDTH_PX/2 + 2), -90)
+        self.sensors = {"front":        front_sensor, 
+                        "front_right" : front_right_sensor, 
+                        "front_left" :  front_left_sensor, 
+                        "left" :        left_sensor, 
+                        "right" :       right_sensor}
+        controller = Controller.Controller_Tweinstein(kp_d, kd_d, kp_a, kd_a)
+        super().__init__(color, x, y, controller)
+
+    def update(self, map, cars, skids, screen):
+        # Update sensor distances
+        for sensor in self.sensors.values():
+            sensor.sense(map, cars, screen)
+        self.controller.output(self, self.sensors)
+        super().update(map, cars, skids, screen)
